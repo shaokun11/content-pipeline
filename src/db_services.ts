@@ -1,7 +1,6 @@
-import { DataType, DataTypeMap, DataTypeStringEnum } from "@zilliz/milvus2-sdk-node";
+import { DataType } from "@zilliz/milvus2-sdk-node";
 import { client } from "./db/milvus.js";
 import { milvus_indexs } from "./config.js";
-import { Data } from "@zilliz/milvus2-sdk-node/dist/milvus/grpc/Data.js";
 
 class DbServices {
     private collection: string
@@ -22,7 +21,7 @@ class DbServices {
         if ("int_id" in ids) {
             newIds.push(...ids.int_id.data.map(it => "" + it))
         } else if ("str_id" in ids) {
-            newIds.push(...ids.str_id.data.map(it=>""+it))
+            newIds.push(...ids.str_id.data.map(it => "" + it))
         }
         return newIds
 
@@ -52,7 +51,7 @@ class DbServices {
         const res = await client.query({
             collection_name: this.collection,
             limit: 10,
-            expr:"id > " + id,
+            expr: "id > " + id,
             output_fields: ["id", "data"],
         });
         return res.data

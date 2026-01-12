@@ -37,7 +37,7 @@ async function ingestReddit() {
     }
     const maxId = maxNumber(ids)
     await localStore.set("reddit_max_id", maxId)
-    console.log("insert reddit count is ", + items.length)
+    console.log("insert reddit count is ", + items.length, "id is " + after)
 
 }
 
