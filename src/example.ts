@@ -1,3 +1,4 @@
+import { dbService } from "./db_services.js";
 
 async function queryContent() {
   const response = await fetch('http://localhost:3000/query', {
@@ -12,6 +13,10 @@ async function queryContent() {
 
   const data = await response.json();
   console.log(data.results)
+}
+
+function getById() {
+  dbService.getById("463502569975848212").then(console.log)
 }
 
 queryContent();

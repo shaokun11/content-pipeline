@@ -4,6 +4,7 @@ import { getEmbed } from './ai.js';
 import { dbService } from './db_services.js';
 import { startRedditService } from "./ingest.js";
 import { serve } from '@hono/node-server';
+import { isNumberStr } from './math.js';
 startRedditService()
 const app = new Hono();
 
@@ -16,7 +17,6 @@ app.get('/health', (c) => {
 app.post('/query', async (c) => {
     try {
         const { text, } = await c.req.json();
-
         if (!text) {
             return c.json({ error: 'Missing required parameter: text' }, 400);
         }
@@ -24,14 +24,36 @@ app.post('/query', async (c) => {
         const vec = vectors[0]?.values!!
         const results = await dbService.query(vec);
         return c.json({
-            query: text,
-            results: results,
+            data: results,
+            message: "success",
         });
     } catch (error: any) {
-        console.error('Query error:', error);
+        console.error('dbService.query:', error);
         return c.json({
-            error: 'Internal server error',
-            message: error.message
+            message: "Internal server error",
+            data: null
+        }, 500);
+    }
+});
+
+app.get('/query', async (c) => {
+    try {
+        let id = "0"
+        let { cursor } = await c.req.queries();
+        if (!cursor || !isNumberStr(cursor)) {
+            let maxId = localStorage.getItem("reddit_max_id")
+            if (maxId) id = (BigInt(maxId) - 10n).toString()
+        }
+        const results = await dbService.getById(id);
+        return c.json({
+            message: "success",
+            data: results,
+        });
+    } catch (error: any) {
+        console.error('dbService.getById:', error);
+        return c.json({
+            message: 'Internal server error',
+            data: null
         }, 500);
     }
 });

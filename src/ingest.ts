@@ -3,6 +3,7 @@ import { normalizeRedditPost } from "./normalize.js";
 import { parseRedditListing } from "./sources/reddit.js";
 import { getEmbed } from "./ai.js";
 import { localStore } from "./local_kv.js";
+import { maxNumber } from "./math.js";
 const header: Record<string, any> = {
 }
 if (process.env.REDDIT_COOKIE) {
@@ -27,13 +28,15 @@ async function ingestReddit() {
     const data = items.map((it, i) => {
         return {
             vector: vectors[i]!!.values!!,
-            data: normalizeRedditPost(it)
+            data: it
         }
     })
-    await dbService.insert(data)
+    const ids = await dbService.insert(data)
     if (after) {
         await localStore.set("reddit_after", after)
     }
+    const maxId = maxNumber(ids)
+    await localStore.set("reddit_max_id", maxId)
     console.log("insert reddit count is ", + items.length)
 
 }

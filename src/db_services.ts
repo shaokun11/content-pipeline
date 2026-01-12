@@ -1,6 +1,7 @@
-import { DataType } from "@zilliz/milvus2-sdk-node";
+import { DataType, DataTypeMap, DataTypeStringEnum } from "@zilliz/milvus2-sdk-node";
 import { client } from "./db/milvus.js";
 import { milvus_indexs } from "./config.js";
+import { Data } from "@zilliz/milvus2-sdk-node/dist/milvus/grpc/Data.js";
 
 class DbServices {
     private collection: string
@@ -16,6 +17,15 @@ class DbServices {
         if (res.status.code !== 0) {
             throw new Error("insert database error " + res.status.error_code)
         }
+        const newIds = []
+        const ids = res.IDs
+        if ("int_id" in ids) {
+            newIds.push(...ids.int_id.data.map(it => "" + it))
+        } else if ("str_id" in ids) {
+            newIds.push(...ids.str_id.data.map(it=>""+it))
+        }
+        return newIds
+
     }
     async query(vector: number[]) {
         const searchRes = await client.search({
@@ -30,12 +40,22 @@ class DbServices {
                 }),
                 topk: 3,
             },
-            output_fields: ["data"],
+            output_fields: ["data", "id"],
         });
         return searchRes.results.map((r, i) => {
             //@ts-ignore
             return r
         });
+    }
+
+    async getById(id: string) {
+        const res = await client.query({
+            collection_name: this.collection,
+            limit: 10,
+            expr:"id > " + id,
+            output_fields: ["id", "data"],
+        });
+        return res.data
     }
 }
 
