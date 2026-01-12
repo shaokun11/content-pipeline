@@ -11,7 +11,6 @@ export function parseRedditListing(json: RedditListing) {
     return {
         after: json.after,
         items: json.children
-            .filter(c => c.kind === "t3")
             .map(c => c.data),
     };
 }
