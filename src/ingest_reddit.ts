@@ -62,15 +62,15 @@ async function ingest() {
 
 
 export function startRedditService() {
-    let isRunnier = false;
+    let isRunning = false;
     setInterval(() => {
-        if (isRunnier) return
-        isRunnier = true
+        if (isRunning) return
+        isRunning = true
         ingest().then(() => {
         }).catch(err => {
             console.warn("ingest reddit failed ", err)
         }).finally(() => {
-            isRunnier = false
+            isRunning = false
         })
     }, 1000 * 10);
 }
