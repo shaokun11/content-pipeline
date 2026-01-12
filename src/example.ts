@@ -16,7 +16,7 @@ async function queryContent() {
 }
 
 function getById() {
-  dbService.getById("463502569975848212").then(console.log)
+  dbService.getById("463502569975849206").then(console.log)
 }
 
-queryContent();
+getById();

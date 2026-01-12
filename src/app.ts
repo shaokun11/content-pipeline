@@ -41,9 +41,11 @@ app.get('/query', async (c) => {
     try {
         let id = "0"
         let { cursor } = await c.req.queries();
-        if (!cursor || isNumberStr(cursor)) {
+        if (!cursor || !isNumberStr(cursor[0])) {
             let maxId = await localStore.get("reddit_max_id")
             if (maxId) id = (BigInt(maxId) - 10n).toString()
+        } else {
+            id = cursor[0]!!
         }
         const results = await dbService.getById(id);
         return c.json({
