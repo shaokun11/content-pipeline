@@ -5,6 +5,7 @@ import { dbService } from './db_services.js';
 import { startRedditService } from "./ingest.js";
 import { serve } from '@hono/node-server';
 import { isNumberStr } from './math.js';
+import { localStore } from './local_kv.js';
 startRedditService()
 const app = new Hono();
 
@@ -40,8 +41,8 @@ app.get('/query', async (c) => {
     try {
         let id = "0"
         let { cursor } = await c.req.queries();
-        if (!cursor || !isNumberStr(cursor)) {
-            let maxId = localStorage.getItem("reddit_max_id")
+        if (!cursor || isNumberStr(cursor)) {
+            let maxId = await localStore.get("reddit_max_id")
             if (maxId) id = (BigInt(maxId) - 10n).toString()
         }
         const results = await dbService.getById(id);
