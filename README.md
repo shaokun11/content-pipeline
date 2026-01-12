@@ -1,12 +1,13 @@
 # Reddit Semantic Content Pipeline
 
-A content ingestion and semantic search system that fetches Reddit posts, generates embeddings using Google's Gemini AI, and stores them in Milvus vector database for efficient similarity search.
+A content ingestion and semantic search system that fetches Reddit posts, generates embeddings using Google's Gemini AI, and stores them in Milvus vector database for efficient similarity search. Provides a REST API for querying the semantic search functionality.
 
 ## Features
 
 - **Content Ingestion**: Automatically fetches new posts from Reddit
 - **Semantic Embeddings**: Uses Google Gemini's text-embedding-004 model to generate 768-dimensional vectors
 - **Vector Storage**: Stores content and embeddings in Milvus vector database
+- **Web API**: REST API for semantic search queries
 - **Similarity Search**: Enables semantic search across ingested content using cosine similarity
 - **Incremental Updates**: Tracks processed posts to avoid duplicates
 
@@ -38,16 +39,56 @@ Create a `.env` file in the root directory:
 ```
 GEMINI_API_KEY=your_gemini_api_key
 REDDIT_COOKIE=your_reddit_cookie (optional)
+PORT=3000
 ```
 
 ## Usage
 
-### Start the Ingestion Service
+### Start the Web Server
 
-Run the main application to start ingesting Reddit posts:
+Run the main application to start the web server:
+
+```bash
+npm start
+```
+
+Or directly with tsx:
 
 ```bash
 npx tsx src/app.ts
+```
+
+This will start a web server on port 3000 (or PORT environment variable) with the following endpoints:
+
+#### API Endpoints
+
+- `GET /health` - Health check endpoint
+- `POST /query` - Semantic search endpoint
+
+#### Query Endpoint
+
+Send a POST request to `/query` with a JSON body:
+
+```json
+{
+  "text": "your search query here"
+}
+```
+
+Example using curl:
+
+```bash
+curl -X POST http://localhost:3000/query \
+  -H "Content-Type: application/json" \
+  -d '{"text": "machine learning tutorials"}'
+```
+
+### Content Ingestion
+
+To start the Reddit ingestion service, uncomment the following line in `src/app.ts`:
+
+```typescript
+startRedditService()
 ```
 
 This will:
@@ -56,7 +97,6 @@ This will:
 - Fetch new posts from r/all
 - Generate embeddings for the content
 - Store them in Milvus database
-- Perform a sample query with "Ps3hen pirated games"
 
 ### Database Schema
 
@@ -75,6 +115,44 @@ The system uses Milvus with the following collection structure:
   - created_at: Publication timestamp
 
 ## API Reference
+
+### REST API
+
+#### GET /health
+
+Returns the health status of the API.
+
+Response:
+
+```json
+{
+  "status": "ok",
+  "message": "Content Pipeline API is running"
+}
+```
+
+#### POST /query
+
+Performs semantic search on the ingested content.
+
+Request body:
+
+```json
+{
+  "text": "search query"
+}
+```
+
+Response:
+
+```json
+{
+  "query": "search query",
+  "results": [
+    // Array of matching documents
+  ]
+}
+```
 
 ### DbServices Class
 
@@ -113,10 +191,22 @@ The project uses TypeScript with strict mode enabled. Key configurations:
 - Strict type checking enabled
 - Source maps enabled for debugging
 
+### Development Mode
+
+To run in development mode with hot reload:
+
+```bash
+npm run dev
+```
+
+Note: This requires creating a `src/server.ts` file.
+
 ## Dependencies
 
 - @google/genai: Google Gemini AI SDK
 - @zilliz/milvus2-sdk-node: Milvus client
+- hono: Web framework for building APIs
+- @hono/node-server: Node.js adapter for Hono
 - keyv: Local key-value storage for tracking progress
 - dotenv: Environment variable management
 - tsx: TypeScript execution
