@@ -18,9 +18,10 @@ async function embedWithGemini(data: string[]) {
             outputDimensionality: 768
         },
     });
-    const content = response.embeddings?.[0]
-    if (!content) {
+    const content = response.embeddings
+    if (!content || !content.values) {
         throw "Can't get the embed vector from google " + response.embeddings
     }
-    return content!!.values as number[]
+
+    return content
 }

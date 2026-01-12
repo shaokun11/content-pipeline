@@ -1,4 +1,3 @@
-import { setTimeout } from "node:timers/promises";
 import { dbService } from "./db_services.js";
 import { normalizeRedditPost } from "./normalize.js";
 import { parseRedditListing } from "./sources/reddit.js";
@@ -12,7 +11,7 @@ if (process.env.REDDIT_COOKIE) {
 
 async function ingestReddit() {
     const k = "reddit_after"
-    let url = "https://www.reddit.com/r/all/new.json?limit=10"
+    let url = "https://www.reddit.com/r/all/new.json?limit=100"
     const localAfter = await localStore.get(k)
     if (localAfter) {
         url = url + "&after=" + localAfter.slice(3)
@@ -23,36 +22,34 @@ async function ingestReddit() {
     }).then(res => res.json());
 
     const { items, after } = parseRedditListing(res.data);
-    let all = []
-    for (const post of items) {
-        const doc = normalizeRedditPost(post);
-        const vector = await getEmbed([doc.content])
-        all.push({
-            data: doc,
-            vector
-        })
-        await setTimeout(10)
-    }
-    await dbService.insert(all)
+    const contents = items.map(it => normalizeRedditPost(it).content)
+    const vectors = await getEmbed(contents)
+    const data = items.map((it, i) => {
+        return {
+            vector: vectors[i]!!.values!!,
+            data: normalizeRedditPost(it)
+        }
+    })
+    await dbService.insert(data)
     if (after) {
         await localStore.set("reddit_after", after)
     }
-    console.log("insert reddit count is ", + all.length)
+    console.log("insert reddit count is ", + items.length)
 
 }
 
 export function startRedditService() {
     let isRunnier = false;
-    // setInterval(() => {
-    if (isRunnier) return
-    isRunnier = true
-    ingestReddit().then(() => {
-    }).catch(err => {
-        console.warn("ingest reddit failed ", err)
-    }).finally(() => {
-        isRunnier = false
-    })
-    // }, 1000 * 10);
+    setInterval(() => {
+        if (isRunnier) return
+        isRunnier = true
+        ingestReddit().then(() => {
+        }).catch(err => {
+            console.warn("ingest reddit failed ", err)
+        }).finally(() => {
+            isRunnier = false
+        })
+    }, 1000 * 10);
 }
 
 

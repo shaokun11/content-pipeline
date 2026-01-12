@@ -35,6 +35,9 @@ async function initCollection(collection: string, dim = 768) {
             collection_name: collection,
             field_name: "vector",
         });
+        await client.loadCollectionAsync({
+            collection_name: collection
+        })
     }
 
 }

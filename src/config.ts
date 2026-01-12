@@ -1,3 +1,3 @@
-export const milvus_indexs={
-    reddit:"reddit_col_3"
+export const milvus_indexs = {
+    reddit: "reddit_col_6"
 }
