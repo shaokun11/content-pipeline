@@ -9,11 +9,13 @@ class DbServices {
     }
 
     async insert(data: any) {
-        let res =  await client.insert({
+        const res = await client.insert({
             collection_name: this.collection,
-            fields_data:data
+            fields_data: data
         });
-        console.log(res.status.code)
+        if (res.status.code !== 0) {
+            throw new Error("insert database error " + res.status.error_code)
+        }
     }
     async query(vector: number[]) {
         const searchRes = await client.search({
@@ -24,7 +26,7 @@ class DbServices {
                 anns_field: "vector",
                 metric_type: "COSINE",
                 params: JSON.stringify({
-                    nprobe: 10 
+                    nprobe: 10
                 }),
                 topk: 3,
             },

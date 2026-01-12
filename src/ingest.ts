@@ -23,17 +23,15 @@ async function ingestReddit() {
     }).then(res => res.json());
 
     const { items, after } = parseRedditListing(res.data);
-    console.log("get reddit items count is ", items.length)
     let all = []
     for (const post of items) {
         const doc = normalizeRedditPost(post);
-        console.log(doc)
         const vector = await getEmbed([doc.content])
         all.push({
             data: doc,
             vector
         })
-        await setTimeout(100)
+        await setTimeout(10)
     }
     await dbService.insert(all)
     if (after) {

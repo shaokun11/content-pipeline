@@ -16,7 +16,8 @@ export function normalizeRedditPost(post: any): NormalizedDocument {
 
 function buildRedditContent(post: any): string {
   if (post.is_self && post.selftext) {
-    return `${post.title}\n${post.selftext}`;
+    return `${post.title}
+           ${post.selftext}`;
   }
   return post.title;
 }

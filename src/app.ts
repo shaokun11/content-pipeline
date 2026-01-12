@@ -1,10 +1,8 @@
 import { getEmbed } from "./ai.js";
-import { milvus_indexs } from "./config.js";
-import { client } from "./db/milvus.js";
 import { dbService } from "./db_services.js";
 import { startRedditService } from "./ingest.js";
 
-// startRedditService()
+startRedditService()
 
 
 const text = "Ps3hen pirated games"
