@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { getEmbed } from './ai.js';
 import { dbService } from './db_services.js';
-import { startRedditService } from "./ingest.js";
+import { startRedditService } from "./ingest_reddit.js";
 import { serve } from '@hono/node-server';
 import { isNumberStr } from './math.js';
 import { localStore } from './local_kv.js';

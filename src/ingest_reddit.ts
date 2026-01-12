@@ -1,16 +1,35 @@
 import { dbService } from "./db_services.js";
-import { parseRedditListing } from "./sources/reddit.js";
 import { getEmbed } from "./ai.js";
 import { localStore } from "./local_kv.js";
-import { maxNumber } from "./math.js";
-import { buildRedditContent } from "./normalize.js";
 const header: Record<string, any> = {
 }
 if (process.env.REDDIT_COOKIE) {
     header["cookie"] = process.env.REDDIT_COOKIE
 }
+interface RedditListing {
+    after: string | null;
+    befor: string | null;
+    children: {
+        kind: string;
+        data: any;
+    }[];
+}
+function parseRedditListing(json: RedditListing) {
+    return {
+        after: json.after,
+        items: json.children
+            .map(c => c.data),
+    };
+}
+function buildRedditContent(post: any): string {
+    if (post.is_self && post.selftext) {
+        return `${post.title}
+           ${post.selftext}`;
+    }
+    return post.title;
+}
 
-async function ingestReddit() {
+async function ingest() {
     const k = "reddit_after"
     let url = "https://www.reddit.com/r/all/new.json?limit=100"
     const localAfter = await localStore.get(k)
@@ -33,22 +52,21 @@ async function ingestReddit() {
             source: "reddit"
         }
     })
-    const ids = await dbService.insert(data)
+    await dbService.insert(data)
     if (after) {
         await localStore.set("reddit_after", after)
     }
-    const maxId = maxNumber(ids)
-    await localStore.set("reddit_max_id", maxId)
     console.log("insert reddit count is ", + items.length, "id is " + after)
 
 }
+
 
 export function startRedditService() {
     let isRunnier = false;
     setInterval(() => {
         if (isRunnier) return
         isRunnier = true
-        ingestReddit().then(() => {
+        ingest().then(() => {
         }).catch(err => {
             console.warn("ingest reddit failed ", err)
         }).finally(() => {

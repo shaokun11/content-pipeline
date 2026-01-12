@@ -1,6 +1,8 @@
 import { DataType } from "@zilliz/milvus2-sdk-node";
-import { client } from "./db/milvus.js";
+import { client } from "./milvus.js";
 import { milvus_indexs } from "./config.js";
+import { localStore } from "./local_kv.js";
+import { maxNumber } from "./math.js";
 
 class DbServices {
     private collection: string
@@ -23,8 +25,8 @@ class DbServices {
         } else if ("str_id" in ids) {
             newIds.push(...ids.str_id.data.map(it => "" + it))
         }
-        return newIds
-
+          const maxId = maxNumber(newIds)
+            await localStore.set("reddit_max_id", maxId)
     }
     async query(vector: number[]) {
         const searchRes = await client.search({

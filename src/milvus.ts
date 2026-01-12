@@ -1,5 +1,5 @@
 import { DataType, MilvusClient } from "@zilliz/milvus2-sdk-node";
-import { milvus_indexs } from "../config.js";
+import { milvus_indexs } from "./config.js";
 export const client = new MilvusClient({
     address: "localhost:19530",
 });
