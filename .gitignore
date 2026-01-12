@@ -3,3 +3,4 @@ embedEtcd.yaml
 standalone_embed.sh
 user.yaml
 node_modules
+dist
