@@ -1,9 +1,9 @@
 import { dbService } from "./db_services.js";
-import { normalizeRedditPost } from "./normalize.js";
 import { parseRedditListing } from "./sources/reddit.js";
 import { getEmbed } from "./ai.js";
 import { localStore } from "./local_kv.js";
 import { maxNumber } from "./math.js";
+import { buildRedditContent } from "./normalize.js";
 const header: Record<string, any> = {
 }
 if (process.env.REDDIT_COOKIE) {
@@ -24,12 +24,13 @@ async function ingestReddit() {
 
     const { items, after } = parseRedditListing(res.data);
     if (items.length === 0) return
-    const contents = items.map(it => normalizeRedditPost(it).content)
+    const contents = items.map(it => buildRedditContent(it))
     const vectors = await getEmbed(contents)
     const data = items.map((it, i) => {
         return {
             vector: vectors[i]!!.values!!,
-            data: it
+            data: it,
+            source: "reddit"
         }
     })
     const ids = await dbService.insert(data)

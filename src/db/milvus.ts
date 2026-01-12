@@ -22,6 +22,11 @@ async function initCollection(collection: string, dim = 768) {
                     type_params: { dim: dim.toString() },
                 },
                 {
+                    name: "source",
+                    data_type: DataType.VarChar,
+                    max_length: 1024
+                },
+                {
                     name: "data",
                     data_type: DataType.JSON,
                 },

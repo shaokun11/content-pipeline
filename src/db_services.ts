@@ -39,7 +39,7 @@ class DbServices {
                 }),
                 topk: 3,
             },
-            output_fields: ["data", "id"],
+            output_fields: ["data", "id", "source"],
         });
         return searchRes.results.map((r, i) => {
             //@ts-ignore
@@ -52,7 +52,7 @@ class DbServices {
             collection_name: this.collection,
             limit: 10,
             expr: "id > " + id,
-            output_fields: ["id", "data"],
+            output_fields: ["id", "data", "source"],
         });
         return res.data
     }
