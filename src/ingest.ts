@@ -23,6 +23,7 @@ async function ingestReddit() {
     }).then(res => res.json());
 
     const { items, after } = parseRedditListing(res.data);
+    if (items.length === 0) return
     const contents = items.map(it => normalizeRedditPost(it).content)
     const vectors = await getEmbed(contents)
     const data = items.map((it, i) => {
