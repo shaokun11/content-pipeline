@@ -25,8 +25,8 @@ class DbServices {
         } else if ("str_id" in ids) {
             newIds.push(...ids.str_id.data.map(it => "" + it))
         }
-          const maxId = maxNumber(newIds)
-            await localStore.set("reddit_max_id", maxId)
+        const maxId = maxNumber(newIds)
+        await localStore.set("reddit_max_id", maxId)
     }
     async query(vector: number[]) {
         const searchRes = await client.search({
