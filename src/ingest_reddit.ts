@@ -43,6 +43,8 @@ async function ingest() {
 
     const { items, after } = parseRedditListing(res.data);
     if (items.length === 0) return
+    // make sure save database id and create time is the same
+    items.reverse()
     const contents = items.map(it => buildRedditContent(it))
     const vectors = await getEmbed(contents)
     const data = items.map((it, i) => {
