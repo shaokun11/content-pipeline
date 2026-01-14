@@ -1,6 +1,7 @@
 import { dbService } from "./db_services.js";
 import { getEmbed } from "./ai.js";
 import { localStore } from "./local_kv.js";
+import { setTimeout } from "node:timers/promises";
 const header: Record<string, any> = {
 }
 if (process.env.REDDIT_COOKIE) {
@@ -16,7 +17,6 @@ interface RedditListing {
 }
 function parseRedditListing(json: RedditListing) {
     return {
-        after: json.after,
         items: json.children
             .map(c => c.data),
     };
@@ -29,42 +29,77 @@ function buildRedditContent(post: any): string {
     return post.title;
 }
 
-async function ingest() {
-    const k = "reddit_after"
-    let url = "https://www.reddit.com/r/all/new.json?limit=100"
-    const localAfter = await localStore.get(k)
-    if (localAfter) {
-        url = url + "&after=" + localAfter.slice(3)
-    }
-    const res = await fetch(url, {
-        "headers": header,
-        "method": "GET"
-    }).then(res => res.json());
+const SEEN_KEY = "reddit_seen_ids"
+const MAX_SEEN = 5000
 
-    const { items, after } = parseRedditListing(res.data);
-    if (items.length === 0) return
-    // make sure save database id and create time is the same
-    items.reverse()
-    const contents = items.map(it => buildRedditContent(it))
-    const vectors = await getEmbed(contents)
-    const data = items.map((it, i) => {
-        return {
-            vector: vectors[i]!!.values!!,
-            data: it,
-            source: "reddit"
+let seenIds = new Set()
+
+async function loadSeenIds() {
+    const stored = await localStore.get(SEEN_KEY)
+    if (Array.isArray(stored)) {
+        for (const id of stored) {
+            seenIds.add(id)
         }
-    })
-    await dbService.insert(data)
-    if (after) {
-        await localStore.set("reddit_after", after)
     }
-    console.log("insert reddit count is ", + items.length, "id is " + after)
+    console.log("loaded seen ids:", seenIds.size)
+}
 
+async function ingest() {
+    const url = "https://www.reddit.com/r/all/new.json?limit=100"
+
+    const res = await fetch(url, {
+        headers: header,
+        method: "GET"
+    }).then(res => res.json())
+
+    const { items } = parseRedditListing(res.data)
+    if (items.length === 0) {
+        await setTimeout(5 * 1000)
+        return
+    }
+
+    const freshItems = items.filter(it => !seenIds.has(it.id))
+
+    if (freshItems.length === 0) {
+        await setTimeout(5 * 1000)
+        return
+    }
+
+    freshItems.reverse()
+
+    const contents = freshItems.map(it => buildRedditContent(it))
+    const vectors = await getEmbed(contents)
+
+    const data = freshItems.map((it, i) => ({
+        vector: vectors[i]!!.values!!,
+        data: it,
+        source: "reddit"
+    }))
+
+    await dbService.insert(data)
+
+    for (const it of freshItems) {
+        seenIds.add(it.id)
+    }
+    if (seenIds.size > MAX_SEEN) {
+        const trimmed = Array.from(seenIds).slice(-MAX_SEEN)
+        seenIds = new Set(trimmed)
+    }
+
+    await localStore.set(SEEN_KEY, Array.from(seenIds))
+    console.log(
+        "insert reddit count:",
+        freshItems.length,
+        "latest id:",
+        freshItems[freshItems.length - 1].id
+    )
 }
 
 
-export function startRedditService() {
+
+export async function startRedditService() {
     let isRunning = false;
+    await loadSeenIds()
     setInterval(() => {
         if (isRunning) return
         isRunning = true
