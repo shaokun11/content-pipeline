@@ -2,6 +2,7 @@ import { dbService } from "./db_services.js";
 import { getEmbed } from "./ai.js";
 import { localStore } from "./local_kv.js";
 import { setTimeout } from "node:timers/promises";
+import { writeFile } from "node:fs/promises";
 const header: Record<string, any> = {
 }
 if (process.env.REDDIT_COOKIE) {
@@ -75,9 +76,14 @@ async function ingest() {
         data: it,
         source: "reddit"
     }))
-
-    await dbService.insert(data)
-
+    for (let item of data) {
+        try {
+            await dbService.insert([item])
+        } catch (e: any) {
+            // Maybe there data too big for save to database, now we only skip it
+            console.warn("insert data failed ", e.message)
+        }
+    }
     for (const it of freshItems) {
         seenIds.add(it.id)
     }
